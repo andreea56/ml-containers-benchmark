@@ -1,0 +1,19 @@
+FROM python:3.11-slim AS base
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --break-system-packages -r requirements.txt
+
+COPY src/aggregate_results.py src/plot_results.py ./
+
+RUN groupadd -r mluser && useradd -r -g mluser -d /app -s /usr/sbin/nologin mluser \
+    && mkdir -p /output \
+    && chown -R mluser:mluser /app /output
+
+USER mluser
+
+ENV OUTPUT_DIR=/output \
+    PYTHONUNBUFFERED=1
+
+ENTRYPOINT ["sh", "-c", "python aggregate_results.py && python plot_results.py"]
