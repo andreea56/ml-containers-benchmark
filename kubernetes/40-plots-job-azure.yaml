@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: plots-job
+  namespace: ml-experiments
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      serviceAccountName: plots-waiter
+      restartPolicy: Never
+      initContainers:
+        - name: wait-for-jobs
+          image: bitnami/kubectl:latest
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              for job in svm-job random-forest-job logistic-regression-job deeptext-job \
+                         kmeans-job dbscan-job sarsa-job sarsa-bandit-job dqn-job dqn-bandit-job; do
+                echo "Waiting for $job (all 5 seed repetitions)..."
+                kubectl wait --for=condition=complete "job/$job" -n ml-experiments --timeout=14400s
+              done
+              echo "All jobs finished."
+      containers:
+        - name: plots
+          image: mlcontainersacrie2026.azurecr.io/reporting/plots:latest
+          resources:
+            requests:
+              memory: "512Mi"
+            limits:
+              memory: "1Gi"
+          volumeMounts:
+            - name: output
+              mountPath: /output
+      volumes:
+        - name: output
+          persistentVolumeClaim:
+            claimName: ml-output-pvc

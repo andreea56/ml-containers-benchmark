@@ -1,0 +1,190 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: svm-job
+  namespace: ml-experiments
+spec:
+  completionMode: Indexed
+  completions: 5
+  parallelism: 3
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: svm
+          image: mlcontainersacrie2026.azurecr.io/supervised/svm:latest
+          command: ["sh", "-c"]
+          args:
+            - |
+              case $JOB_COMPLETION_INDEX in
+                0) SEED=42 ;;
+                1) SEED=123 ;;
+                2) SEED=2024 ;;
+                3) SEED=7 ;;
+                4) SEED=99 ;;
+              esac
+              export SEED
+              echo "Repetitie index $JOB_COMPLETION_INDEX -> SEED=$SEED"
+              python supervised/svm_model.py
+          resources:
+            requests:
+              memory: "1Gi"
+            limits:
+              memory: "2Gi"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: output
+              mountPath: /output
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ml-data-pvc
+        - name: output
+          persistentVolumeClaim:
+            claimName: ml-output-pvc
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: random-forest-job
+  namespace: ml-experiments
+spec:
+  completionMode: Indexed
+  completions: 5
+  parallelism: 3
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: random-forest
+          image: mlcontainersacrie2026.azurecr.io/supervised/random-forest:latest
+          command: ["sh", "-c"]
+          args:
+            - |
+              case $JOB_COMPLETION_INDEX in
+                0) SEED=42 ;;
+                1) SEED=123 ;;
+                2) SEED=2024 ;;
+                3) SEED=7 ;;
+                4) SEED=99 ;;
+              esac
+              export SEED
+              echo "Repetitie index $JOB_COMPLETION_INDEX -> SEED=$SEED"
+              python supervised/random_forest_model.py
+          resources:
+            requests:
+              memory: "1Gi"
+            limits:
+              memory: "2Gi"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: output
+              mountPath: /output
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ml-data-pvc
+        - name: output
+          persistentVolumeClaim:
+            claimName: ml-output-pvc
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: logistic-regression-job
+  namespace: ml-experiments
+spec:
+  completionMode: Indexed
+  completions: 5
+  parallelism: 3
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: logistic-regression
+          image: mlcontainersacrie2026.azurecr.io/supervised/logistic-regression:latest
+          command: ["sh", "-c"]
+          args:
+            - |
+              case $JOB_COMPLETION_INDEX in
+                0) SEED=42 ;;
+                1) SEED=123 ;;
+                2) SEED=2024 ;;
+                3) SEED=7 ;;
+                4) SEED=99 ;;
+              esac
+              export SEED
+              echo "Repetitie index $JOB_COMPLETION_INDEX -> SEED=$SEED"
+              python supervised/logistic_regression_model.py
+          resources:
+            requests:
+              memory: "1Gi"
+            limits:
+              memory: "2Gi"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: output
+              mountPath: /output
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ml-data-pvc
+        - name: output
+          persistentVolumeClaim:
+            claimName: ml-output-pvc
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: deeptext-job
+  namespace: ml-experiments
+spec:
+  completionMode: Indexed
+  completions: 5
+  parallelism: 2
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: deeptext
+          image: mlcontainersacrie2026.azurecr.io/supervised/deeptext:latest
+          env:
+            - name: EPOCHS
+              value: "3"
+          command: ["sh", "-c"]
+          args:
+            - |
+              case $JOB_COMPLETION_INDEX in
+                0) SEED=42 ;;
+                1) SEED=123 ;;
+                2) SEED=2024 ;;
+                3) SEED=7 ;;
+                4) SEED=99 ;;
+              esac
+              export SEED
+              echo "Repetitie index $JOB_COMPLETION_INDEX -> SEED=$SEED"
+              python supervised/deeptext_model.py
+          resources:
+            requests:
+              memory: "2Gi"
+            limits:
+              memory: "3Gi"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: output
+              mountPath: /output
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ml-data-pvc
+        - name: output
+          persistentVolumeClaim:
+            claimName: ml-output-pvc

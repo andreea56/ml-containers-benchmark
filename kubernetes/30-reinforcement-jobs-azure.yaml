@@ -1,0 +1,177 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sarsa-job
+  namespace: ml-experiments
+spec:
+  completionMode: Indexed
+  completions: 5
+  parallelism: 3
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: sarsa
+          image: mlcontainersacrie2026.azurecr.io/reinforcement/sarsa:latest
+          command: ["sh", "-c"]
+          args:
+            - |
+              case $JOB_COMPLETION_INDEX in
+                0) SEED=42 ;;
+                1) SEED=123 ;;
+                2) SEED=2024 ;;
+                3) SEED=7 ;;
+                4) SEED=99 ;;
+              esac
+              export SEED
+              echo "Repetitie index $JOB_COMPLETION_INDEX -> SEED=$SEED"
+              python reinforcement/sarsa_agent.py
+          resources:
+            requests:
+              memory: "256Mi"
+            limits:
+              memory: "512Mi"
+          volumeMounts:
+            - name: output
+              mountPath: /output
+      volumes:
+        - name: output
+          persistentVolumeClaim:
+            claimName: ml-output-pvc
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sarsa-bandit-job
+  namespace: ml-experiments
+spec:
+  completionMode: Indexed
+  completions: 5
+  parallelism: 3
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: sarsa-bandit
+          image: mlcontainersacrie2026.azurecr.io/reinforcement/sarsa-bandit:latest
+          command: ["sh", "-c"]
+          args:
+            - |
+              case $JOB_COMPLETION_INDEX in
+                0) SEED=42 ;;
+                1) SEED=123 ;;
+                2) SEED=2024 ;;
+                3) SEED=7 ;;
+                4) SEED=99 ;;
+              esac
+              export SEED
+              echo "Repetitie index $JOB_COMPLETION_INDEX -> SEED=$SEED"
+              python reinforcement/sarsa_bandit_news.py
+          resources:
+            requests:
+              memory: "1.5Gi"
+            limits:
+              memory: "2Gi"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: output
+              mountPath: /output
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ml-data-pvc
+        - name: output
+          persistentVolumeClaim:
+            claimName: ml-output-pvc
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dqn-job
+  namespace: ml-experiments
+spec:
+  completionMode: Indexed
+  completions: 5
+  parallelism: 2
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: dqn
+          image: mlcontainersacrie2026.azurecr.io/reinforcement/dqn:latest
+          command: ["sh", "-c"]
+          args:
+            - |
+              case $JOB_COMPLETION_INDEX in
+                0) SEED=42 ;;
+                1) SEED=123 ;;
+                2) SEED=2024 ;;
+                3) SEED=7 ;;
+                4) SEED=99 ;;
+              esac
+              export SEED
+              echo "Repetitie index $JOB_COMPLETION_INDEX -> SEED=$SEED"
+              python reinforcement/dqn_agent.py
+          resources:
+            requests:
+              memory: "1.5Gi"
+            limits:
+              memory: "3Gi"
+          volumeMounts:
+            - name: output
+              mountPath: /output
+      volumes:
+        - name: output
+          persistentVolumeClaim:
+            claimName: ml-output-pvc
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dqn-bandit-job
+  namespace: ml-experiments
+spec:
+  completionMode: Indexed
+  completions: 5
+  parallelism: 2
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: dqn-bandit
+          image: mlcontainersacrie2026.azurecr.io/reinforcement/dqn-bandit:latest
+          command: ["sh", "-c"]
+          args:
+            - |
+              case $JOB_COMPLETION_INDEX in
+                0) SEED=42 ;;
+                1) SEED=123 ;;
+                2) SEED=2024 ;;
+                3) SEED=7 ;;
+                4) SEED=99 ;;
+              esac
+              export SEED
+              echo "Repetitie index $JOB_COMPLETION_INDEX -> SEED=$SEED"
+              python reinforcement/dqn_bandit_news.py
+          resources:
+            requests:
+              memory: "2Gi"
+            limits:
+              memory: "3.5Gi"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: output
+              mountPath: /output
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ml-data-pvc
+        - name: output
+          persistentVolumeClaim:
+            claimName: ml-output-pvc

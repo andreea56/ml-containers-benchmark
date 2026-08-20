@@ -1,0 +1,96 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kmeans-job
+  namespace: ml-experiments
+spec:
+  completionMode: Indexed
+  completions: 5
+  parallelism: 3
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: kmeans
+          image: mlcontainersacrie2026.azurecr.io/unsupervised/kmeans:latest
+          command: ["sh", "-c"]
+          args:
+            - |
+              case $JOB_COMPLETION_INDEX in
+                0) SEED=42 ;;
+                1) SEED=123 ;;
+                2) SEED=2024 ;;
+                3) SEED=7 ;;
+                4) SEED=99 ;;
+              esac
+              export SEED
+              echo "Repetitie index $JOB_COMPLETION_INDEX -> SEED=$SEED"
+              python unsupervised/kmeans_model.py
+          resources:
+            requests:
+              memory: "1.5Gi"
+            limits:
+              memory: "2.5Gi"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: output
+              mountPath: /output
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ml-data-pvc
+        - name: output
+          persistentVolumeClaim:
+            claimName: ml-output-pvc
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dbscan-job
+  namespace: ml-experiments
+spec:
+  completionMode: Indexed
+  completions: 5
+  parallelism: 2
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: dbscan
+          image: mlcontainersacrie2026.azurecr.io/unsupervised/dbscan:latest
+          env:
+            - name: DBSCAN_EPS
+              value: "0.3"
+          command: ["sh", "-c"]
+          args:
+            - |
+              case $JOB_COMPLETION_INDEX in
+                0) SEED=42 ;;
+                1) SEED=123 ;;
+                2) SEED=2024 ;;
+                3) SEED=7 ;;
+                4) SEED=99 ;;
+              esac
+              export SEED
+              echo "Repetitie index $JOB_COMPLETION_INDEX -> SEED=$SEED"
+              python unsupervised/dbscan_model.py
+          resources:
+            requests:
+              memory: "3.5Gi"
+            limits:
+              memory: "5Gi"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: output
+              mountPath: /output
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ml-data-pvc
+        - name: output
+          persistentVolumeClaim:
+            claimName: ml-output-pvc
